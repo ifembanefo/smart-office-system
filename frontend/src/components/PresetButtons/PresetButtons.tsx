@@ -1,4 +1,4 @@
-import type { BlindPosition, Preset } from '../../types'
+import type { Preset } from '../../types'
 
 const PRESETS: Preset[] = [
   { label: 'Glare Mode', height: 55, angle: 80, temp: 28, licht: 3500 },
@@ -13,9 +13,10 @@ const PROFILES: Preset[] = [
 
 interface Props {
   onSelect: (preset: Preset) => void
+  onAggregatePreferences: () => void
 }
 
-export function PresetButtons({ onSelect }: Props) {
+export function PresetButtons({ onSelect, onAggregatePreferences }: Props) {
   return (
     <div className="bg-white rounded-2xl shadow-md p-6 flex flex-col gap-6">
       <div>
@@ -48,6 +49,12 @@ export function PresetButtons({ onSelect }: Props) {
             </button>
           ))}
         </div>
+        <button
+          onClick={onAggregatePreferences}
+          className="mt-3 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-xl text-sm transition-colors"
+        >
+          Aggregate My Preferences
+        </button>
       </div>
     </div>
   )

@@ -34,3 +34,13 @@ export interface Preset {
   temp?: number
   licht?: number
 }
+
+export interface UserPreference {
+  partner_profile: string
+  height: number
+  angle: number
+  temp: number
+  licht: number
+  mode: string
+  preset_label?: string
+}

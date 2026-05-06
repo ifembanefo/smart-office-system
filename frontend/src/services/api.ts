@@ -1,4 +1,4 @@
-import type { BlindPosition, SensorData } from '../types'
+import type { BlindPosition, SensorData, UserPreference } from '../types'
 
 const BASE = '/api/blind'
 
@@ -25,4 +25,18 @@ export async function sendSensorData(data: SensorData) {
 
 export async function setAutoMode(enabled: boolean) {
   await fetch(`${BASE}/auto_mode?enabled=${enabled}`, { method: 'POST' })
+}
+
+export async function submitPreference(pref: UserPreference) {
+  const res = await fetch(`${BASE}/preference`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(pref),
+  })
+  return res.json()
+}
+
+export async function fetchPreferences() {
+  const res = await fetch(`${BASE}/preferences`)
+  return res.json()
 }

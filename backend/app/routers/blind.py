@@ -1,6 +1,7 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from app.models.sensor import SensorData, BlindPosition
+from app.models.sensor import SensorData, BlindPosition, UserPreference
 from app.services.automation import automation_service
+from app.services.preference_store import preference_store
 from app.websocket.manager import manager
 import json
 
@@ -41,6 +42,17 @@ async def update_sensor(data: SensorData):
         await manager.broadcast({"type": "position", "height": new_pos.height, "angle": new_pos.angle})
 
     return {"status": "ok"}
+
+
+@router.post("/preference")
+async def submit_preference(pref: UserPreference):
+    preference_store.add(pref)
+    return {"status": "ok", "total": preference_store.count()}
+
+
+@router.get("/preferences")
+async def get_preferences():
+    return {"preferences": [p.model_dump() for p in preference_store.all()]}
 
 
 @router.post("/auto_mode")

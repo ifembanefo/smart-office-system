@@ -3,6 +3,8 @@ import { SensorPanel } from '../components/SensorPanel/SensorPanel'
 import { BlindControl } from '../components/BlindControl/BlindControl'
 import { PresetButtons } from '../components/PresetButtons/PresetButtons'
 import { VideoSimulation } from '../components/VideoSimulation/VideoSimulation'
+import { ConsentModal } from '../components/ConsentModal/ConsentModal'
+import { PreferenceWizard } from '../components/PreferenceWizard/PreferenceWizard'
 import { useWebSocket } from '../hooks/useWebSocket'
 import { setPosition, setAutoMode, sendSensorData } from '../services/api'
 import type { AppState, BlindPosition, Preset, WSMessage } from '../types'
@@ -16,6 +18,8 @@ const DEFAULT_STATE: AppState = {
 }
 
 export function Dashboard() {
+  const [consented, setConsented] = useState(() => localStorage.getItem('consent') === 'true')
+  const [wizardOpen, setWizardOpen] = useState(false)
   const [state, setState] = useState<AppState>(DEFAULT_STATE)
   const [sensorValues, setSensorValues] = useState({ temp: 0, licht: 0 })
 
@@ -59,6 +63,16 @@ export function Dashboard() {
     await setAutoMode(enabled)
   }
 
+  const handleConsent = () => {
+    localStorage.setItem('consent', 'true')
+    setConsented(true)
+  }
+
+  const handleResetEvaluation = () => {
+    localStorage.removeItem('consent')
+    setConsented(false)
+  }
+
   const handlePreset = async (preset: Preset) => {
     const pos: BlindPosition = { height: preset.height, angle: preset.angle }
     setState((prev) => ({ ...prev, auto_mode: false, position: pos }))
@@ -73,6 +87,8 @@ export function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-100">
+      {!consented && <ConsentModal onConsent={handleConsent} />}
+      {wizardOpen && <PreferenceWizard onClose={() => setWizardOpen(false)} />}
       {/* Header */}
       <header className="bg-primary text-white shadow-lg">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
@@ -80,13 +96,21 @@ export function Dashboard() {
             <h1 className="text-2xl font-bold tracking-tight">Smart Office System</h1>
             <p className="text-blue-200 text-sm">Thesis 2026 — Ife Mbanefo</p>
           </div>
-          <div className="flex items-center gap-2">
-            <span
-              className={`w-2.5 h-2.5 rounded-full ${
-                state.auto_mode ? 'bg-green-400' : 'bg-yellow-400'
-              }`}
-            />
-            <span className="text-sm">{state.auto_mode ? 'Automatic' : 'Manual'}</span>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span
+                className={`w-2.5 h-2.5 rounded-full ${
+                  state.auto_mode ? 'bg-green-400' : 'bg-yellow-400'
+                }`}
+              />
+              <span className="text-sm">{state.auto_mode ? 'Automatic' : 'Manual'}</span>
+            </div>
+            <button
+              onClick={handleResetEvaluation}
+              className="text-xs bg-white/20 hover:bg-white/30 text-white px-3 py-1.5 rounded-lg transition-colors"
+            >
+              Restart Evaluation
+            </button>
           </div>
         </div>
       </header>
@@ -101,7 +125,7 @@ export function Dashboard() {
           onAutoToggle={handleAutoToggle}
         />
         <VideoSimulation position={state.position} />
-        <PresetButtons onSelect={handlePreset} />
+        <PresetButtons onSelect={handlePreset} onAggregatePreferences={() => setWizardOpen(true)} />
       </main>
     </div>
   )
