@@ -11,7 +11,7 @@ export function useWebSocket(onMessage: (msg: WSMessage) => void) {
   }, [])
 
   useEffect(() => {
-    const ws = new WebSocket(`ws://${window.location.host}/ws`)
+    const ws = new WebSocket(`ws://${window.location.host}/api/blind/ws`)
     wsRef.current = ws
 
     ws.onmessage = (e) => {

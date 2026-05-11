@@ -81,20 +81,19 @@ export function PreferenceWizard({ onClose, onAggregated }: Props) {
 
   // ── Handlers ───────────────────────────────────────────────────────────────
 
-  const handlePresetSelect = async (preset: typeof PRESETS[number]) => {
-    await submit({ height: preset.height, angle: preset.angle, temp: preset.temp, licht: preset.licht, preset_label: preset.label })
-  }
-
   const handleImportanceSelect = (bu: number, bp: number) => {
     setBetaUser(bu)
     setBetaPartner(bp)
-    submit({ ...sliders, betaUser: bu, betaPartner: bp }, bu, bp)
+    submit({ ...sliders }, bu, bp, 'wowa')
   }
 
+  // method is passed explicitly to avoid React stale-closure bug when
+  // setAggMethod and submit are called in the same synchronous event handler.
   const submit = async (
-    values: Partial<UserPreference> & { betaUser?: number; betaPartner?: number },
+    values: Partial<UserPreference>,
     bu = betaUser,
     bp = betaPartner,
+    method: AggMethod = aggMethod,
   ) => {
     setSubmitting(true)
     const pref: UserPreference = {
@@ -108,7 +107,7 @@ export function PreferenceWizard({ onClose, onAggregated }: Props) {
     }
     await submitPreference(pref)
 
-    if (aggMethod === 'simple') {
+    if (method === 'simple') {
       const r = await aggregateSimple(pref)
       setSimpleResult(r)
       onAggregated(r)
@@ -240,7 +239,7 @@ export function PreferenceWizard({ onClose, onAggregated }: Props) {
               How should your preferences be combined with your partner's?
             </p>
             <div className="flex flex-col gap-3">
-              <button onClick={() => { setAggMethod('simple'); handlePresetSelect(sliders as any) || submit({ ...sliders }) }}
+              <button onClick={() => { setAggMethod('simple'); submit({ ...sliders }, betaUser, betaPartner, 'simple') }}
                 className="border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 rounded-xl p-4 text-left transition-colors">
                 <div className="flex items-center justify-between mb-1">
                   <p className="font-semibold text-gray-800">Condition A — Simple Averaging</p>

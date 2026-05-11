@@ -97,6 +97,8 @@ export function Dashboard() {
             setAggregatedProfile(result)
             const { temp, licht } = result.aggregated
             setSensorValues({ temp, licht })
+            setState((prev) => ({ ...prev, auto_mode: false }))
+            await setAutoMode(false)
             await sendSensorData({ remote_id: 'aggregated', temp, licht })
           }}
         />
