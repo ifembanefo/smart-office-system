@@ -2,6 +2,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from app.models.sensor import SensorData, BlindPosition, UserPreference
 from app.services.automation import automation_service
 from app.services.preference_store import preference_store
+from app.services.aggregation import simple_average, wowa_aggregate
 from app.websocket.manager import manager
 import json
 
@@ -48,6 +49,30 @@ async def update_sensor(data: SensorData):
 async def submit_preference(pref: UserPreference):
     preference_store.add(pref)
     return {"status": "ok", "total": preference_store.count()}
+
+
+@router.post("/aggregate/simple")
+async def aggregate_simple(pref: UserPreference):
+    result = simple_average(pref)
+    pos = result.blind_position
+    automation_service.set_manual_position(pos)
+    await manager.broadcast({"type": "position", "height": pos.height, "angle": pos.angle})
+    return result
+
+
+@router.post("/aggregate/wowa")
+async def aggregate_wowa(
+    pref: UserPreference,
+    beta_user: float = 0.5,
+    beta_partner: float = 0.5,
+    a: float = 0.3,
+    b: float = 0.8,
+):
+    result = wowa_aggregate(pref, beta_user=beta_user, beta_partner=beta_partner, a=a, b=b)
+    pos = result.blind_position
+    automation_service.set_manual_position(pos)
+    await manager.broadcast({"type": "position", "height": pos.height, "angle": pos.angle})
+    return result
 
 
 @router.get("/preferences")

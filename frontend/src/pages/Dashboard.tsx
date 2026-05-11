@@ -5,9 +5,10 @@ import { PresetButtons } from '../components/PresetButtons/PresetButtons'
 import { VideoSimulation } from '../components/VideoSimulation/VideoSimulation'
 import { ConsentModal } from '../components/ConsentModal/ConsentModal'
 import { PreferenceWizard } from '../components/PreferenceWizard/PreferenceWizard'
+import { AggregatedProfileCard } from '../components/AggregatedProfileCard/AggregatedProfileCard'
 import { useWebSocket } from '../hooks/useWebSocket'
 import { setPosition, setAutoMode, sendSensorData } from '../services/api'
-import type { AppState, BlindPosition, Preset, WSMessage } from '../types'
+import type { AppState, BlindPosition, Preset, WSMessage, AggregationResult } from '../types'
 
 const DEFAULT_STATE: AppState = {
   position: { height: 0, angle: 0 },
@@ -20,6 +21,7 @@ const DEFAULT_STATE: AppState = {
 export function Dashboard() {
   const [consented, setConsented] = useState(() => localStorage.getItem('consent') === 'true')
   const [wizardOpen, setWizardOpen] = useState(false)
+  const [aggregatedProfile, setAggregatedProfile] = useState<AggregationResult | null>(null)
   const [state, setState] = useState<AppState>(DEFAULT_STATE)
   const [sensorValues, setSensorValues] = useState({ temp: 0, licht: 0 })
 
@@ -88,7 +90,17 @@ export function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-100">
       {!consented && <ConsentModal onConsent={handleConsent} />}
-      {wizardOpen && <PreferenceWizard onClose={() => setWizardOpen(false)} />}
+      {wizardOpen && (
+        <PreferenceWizard
+          onClose={() => setWizardOpen(false)}
+          onAggregated={async (result) => {
+            setAggregatedProfile(result)
+            const { temp, licht } = result.aggregated
+            setSensorValues({ temp, licht })
+            await sendSensorData({ remote_id: 'aggregated', temp, licht })
+          }}
+        />
+      )}
       {/* Header */}
       <header className="bg-primary text-white shadow-lg">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
@@ -126,6 +138,7 @@ export function Dashboard() {
         />
         <VideoSimulation position={state.position} />
         <PresetButtons onSelect={handlePreset} onAggregatePreferences={() => setWizardOpen(true)} />
+        {aggregatedProfile && <AggregatedProfileCard result={aggregatedProfile} />}
       </main>
     </div>
   )
