@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { SensorPanel } from '../components/SensorPanel/SensorPanel'
 import { BlindControl } from '../components/BlindControl/BlindControl'
 import { PresetButtons } from '../components/PresetButtons/PresetButtons'
@@ -14,14 +14,18 @@ const DEFAULT_STATE: AppState = {
   position: { height: 0, angle: 0 },
   avg_temp: 0,
   avg_licht: 0,
-  auto_mode: true,
+  auto_mode: false,
   sensors: [],
 }
 
 export function Dashboard() {
   const [consented, setConsented] = useState(() => localStorage.getItem('consent') === 'true')
   const [wizardOpen, setWizardOpen] = useState(false)
-  const [aggregatedProfile, setAggregatedProfile] = useState<AggregationResult | null>(null)
+  const [justAggregated, setJustAggregated] = useState(false)
+  const didAggregateRef = useRef(false)
+  const [aggregatedProfile, setAggregatedProfile] = useState<AggregationResult | null>(() => {
+    try { return JSON.parse(localStorage.getItem('aggregated_profile') ?? 'null') } catch { return null }
+  })
   const [state, setState] = useState<AppState>(DEFAULT_STATE)
   const [sensorValues, setSensorValues] = useState({ temp: 0, licht: 0 })
 
@@ -72,7 +76,9 @@ export function Dashboard() {
 
   const handleResetEvaluation = () => {
     localStorage.removeItem('consent')
+    localStorage.removeItem('aggregated_profile')
     setConsented(false)
+    setAggregatedProfile(null)
   }
 
   const handlePreset = async (preset: Preset) => {
@@ -92,9 +98,18 @@ export function Dashboard() {
       {!consented && <ConsentModal onConsent={handleConsent} />}
       {wizardOpen && (
         <PreferenceWizard
-          onClose={() => setWizardOpen(false)}
+          onClose={() => {
+            setWizardOpen(false)
+            if (didAggregateRef.current) {
+              didAggregateRef.current = false
+              setJustAggregated(true)
+              setTimeout(() => setJustAggregated(false), 3000)
+            }
+          }}
           onAggregated={async (result) => {
+            didAggregateRef.current = true
             setAggregatedProfile(result)
+            localStorage.setItem('aggregated_profile', JSON.stringify(result))
             const { temp, licht } = result.aggregated
             setSensorValues({ temp, licht })
             setState((prev) => ({ ...prev, auto_mode: false }))
@@ -138,9 +153,15 @@ export function Dashboard() {
           onChange={handlePositionChange}
           onAutoToggle={handleAutoToggle}
         />
-        <VideoSimulation position={state.position} />
+        <div className={`rounded-2xl transition-all duration-700 ${justAggregated ? 'ring-4 ring-blue-400 shadow-xl shadow-blue-200' : ''}`}>
+          <VideoSimulation position={state.position} />
+        </div>
         <PresetButtons onSelect={handlePreset} onAggregatePreferences={() => setWizardOpen(true)} />
-        {aggregatedProfile && <AggregatedProfileCard result={aggregatedProfile} />}
+        {aggregatedProfile && (
+          <div className={`rounded-2xl transition-all duration-700 md:col-span-2 ${justAggregated ? 'ring-4 ring-blue-400 shadow-xl shadow-blue-200' : ''}`}>
+            <AggregatedProfileCard result={aggregatedProfile} />
+          </div>
+        )}
       </main>
     </div>
   )

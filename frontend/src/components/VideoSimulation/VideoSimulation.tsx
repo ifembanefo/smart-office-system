@@ -26,14 +26,11 @@ export function VideoSimulation({ position }: Props) {
   const slats = Array.from({ length: 10 })
   const videoSrc = `/videos/Video${activeVideo}.mp4`
 
-  // Sync preview video to position
+  // Sync preview video to position on every change
   useEffect(() => {
     const video = previewRef.current
-    if (!video || !video.duration) return
-    const targetTime = getVideoTime(position, video.duration)
-    if (Math.abs(video.currentTime - targetTime) > 0.3) {
-      video.currentTime = targetTime
-    }
+    if (!video || !video.duration || isNaN(video.duration)) return
+    video.currentTime = getVideoTime(position, video.duration)
   }, [position])
 
   // Track fullscreen state changes (e.g. user presses Escape)
@@ -51,7 +48,7 @@ export function VideoSimulation({ position }: Props) {
   }
 
   const exitFullscreen = async () => {
-    if (document.fullscreenElement) {
+    if (document.fullscreenElement) {[]
       await document.exitFullscreen()
     }
   }
@@ -125,7 +122,7 @@ export function VideoSimulation({ position }: Props) {
                   : 'bg-white text-gray-600 border-gray-300 hover:border-primary'
               }`}
             >
-              Video {n}
+              {n === 1 ? 'Video 1 – Height' : 'Video 2 – Angle'}
             </button>
           ))}
         </div>
@@ -148,11 +145,8 @@ export function VideoSimulation({ position }: Props) {
             video.currentTime = getVideoTime(position, video.duration)
           }}
           ref={(video) => {
-            if (video && video.duration) {
-              const targetTime = getVideoTime(position, video.duration)
-              if (Math.abs(video.currentTime - targetTime) > 0.3) {
-                video.currentTime = targetTime
-              }
+            if (video && video.duration && !isNaN(video.duration)) {
+              video.currentTime = getVideoTime(position, video.duration)
             }
           }}
         />

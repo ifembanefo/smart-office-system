@@ -10,7 +10,7 @@ class AutomationService:
     def __init__(self):
         self.sensors: Dict[str, SensorData] = {}
         self.current_position = BlindPosition(height=0.0, angle=0.0)
-        self.auto_mode = True
+        self.auto_mode = False
         self._last_change = 0.0
 
     def update_sensor(self, data: SensorData):
