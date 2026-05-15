@@ -5,11 +5,9 @@ interface Props {
   position: BlindPosition
 }
 
-function getVideoTime(position: BlindPosition, duration: number): number {
-  const heightProgress = position.height / 100
-  const angleProgress = position.angle / 100
-  const effectiveDarkness = Math.max(heightProgress * 0.7, angleProgress)
-  return effectiveDarkness * duration
+function getVideoTime(position: BlindPosition, duration: number, video: 1 | 2): number {
+  const progress = video === 1 ? position.height / 100 : position.angle / 100
+  return progress * duration
 }
 
 export function VideoSimulation({ position }: Props) {
@@ -30,7 +28,7 @@ export function VideoSimulation({ position }: Props) {
   useEffect(() => {
     const video = previewRef.current
     if (!video || !video.duration || isNaN(video.duration)) return
-    video.currentTime = getVideoTime(position, video.duration)
+    video.currentTime = getVideoTime(position, video.duration, activeVideo)
   }, [position])
 
   // Track fullscreen state changes (e.g. user presses Escape)
@@ -97,7 +95,7 @@ export function VideoSimulation({ position }: Props) {
             preload="auto"
             onLoadedMetadata={() => {
               const video = previewRef.current
-              if (video) video.currentTime = getVideoTime(position, video.duration)
+              if (video) video.currentTime = getVideoTime(position, video.duration, activeVideo)
             }}
           />
           <div
@@ -142,11 +140,11 @@ export function VideoSimulation({ position }: Props) {
           preload="auto"
           onLoadedMetadata={(e) => {
             const video = e.currentTarget
-            video.currentTime = getVideoTime(position, video.duration)
+            video.currentTime = getVideoTime(position, video.duration, activeVideo)
           }}
           ref={(video) => {
             if (video && video.duration && !isNaN(video.duration)) {
-              video.currentTime = getVideoTime(position, video.duration)
+              video.currentTime = getVideoTime(position, video.duration, activeVideo)
             }
           }}
         />

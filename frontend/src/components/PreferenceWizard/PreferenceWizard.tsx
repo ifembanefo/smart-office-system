@@ -96,7 +96,7 @@ export function PreferenceWizard({ onClose, onAggregated }: Props) {
               {([
                 { key: 'height', label: 'Blind Height',    min: 0,  max: 100,  unit: '%'    },
                 { key: 'angle',  label: 'Slat Angle',      min: 0,  max: 100,  unit: '%'    },
-                { key: 'temp',   label: 'Temperature',     min: 15, max: 35,   unit: ' °C'  },
+                { key: 'temp',   label: 'Temperature',     min: 5,  max: 40,   unit: ' °C'  },
                 { key: 'licht',  label: 'Light Intensity', min: 0,  max: 5000, unit: ' lux' },
               ] as const).map(({ key, label, min, max, unit }) => (
                 <div key={key}>
