@@ -8,6 +8,7 @@ import { PreferenceWizard } from '../components/PreferenceWizard/PreferenceWizar
 import { AggregatedProfileCard } from '../components/AggregatedProfileCard/AggregatedProfileCard'
 import { useWebSocket } from '../hooks/useWebSocket'
 import { setPosition, setAutoMode, sendSensorData } from '../services/api'
+import { determineBlindPosition } from '../utils/automationLogic'
 import type { AppState, BlindPosition, Preset, WSMessage, AggregationResult } from '../types'
 
 const DEFAULT_STATE: AppState = {
@@ -56,6 +57,8 @@ export function Dashboard() {
 
   const handleSensorChange = async (values: { temp: number; licht: number }) => {
     setSensorValues(values)
+    const newPosition = determineBlindPosition(values.temp, values.licht)
+    setState((prev) => ({ ...prev, position: newPosition }))
     await sendSensorData({ remote_id: 'manual', temp: values.temp, licht: values.licht })
   }
 
