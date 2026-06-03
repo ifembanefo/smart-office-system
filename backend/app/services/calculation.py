@@ -29,8 +29,8 @@ def compute_average(sensor_list: List[SensorData]) -> tuple[float, float]:
     return avg_temp, avg_licht
 
 
-# 4-quarter automation thresholds (temp °C, light ADC-raw)
-QUARTERS = [
+# Automation stages - threshold-based blind position mapping
+STAGES = [
     {"temp": 25.0, "licht": 2500, "height": 25.0, "angle": 25.0},
     {"temp": 26.5, "licht": 2650, "height": 50.0, "angle": 50.0},
     {"temp": 28.0, "licht": 2800, "height": 75.0, "angle": 75.0},
@@ -39,9 +39,9 @@ QUARTERS = [
 
 
 def determine_auto_position(avg_temp: float, avg_licht: float) -> BlindPosition:
-    """Map average sensor values to a blind position using 4-quarter logic."""
+    """Map average sensor values to a blind position using stage-based threshold logic."""
     position = BlindPosition(height=0.0, angle=0.0)
-    for q in QUARTERS:
-        if avg_temp >= q["temp"] or avg_licht >= q["licht"]:
-            position = BlindPosition(height=q["height"], angle=q["angle"])
+    for stage in STAGES:
+        if avg_temp >= stage["temp"] or avg_licht >= stage["licht"]:
+            position = BlindPosition(height=stage["height"], angle=stage["angle"])
     return position
