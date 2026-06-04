@@ -104,7 +104,7 @@ export function VideoSimulation({ position }: Props) {
           />
           {slatsOverlay('gap-[2px]', 'pt-2 px-2')}
           <div className="absolute bottom-2 right-3 text-xs text-white font-mono drop-shadow">
-            H: {position.height}% | A: {position.angle}°
+            H: {position.height}% | A: {position.angle}%
           </div>
         </div>
 
@@ -153,7 +153,7 @@ export function VideoSimulation({ position }: Props) {
         {/* HUD overlay */}
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-6 bg-black/50 text-white text-sm px-6 py-3 rounded-full backdrop-blur">
           <span>H: {position.height}%</span>
-          <span>A: {position.angle}°</span>
+          <span>A: {position.angle}%</span>
           <button
             onClick={exitFullscreen}
             className="bg-white/20 hover:bg-white/40 px-3 py-1 rounded-full transition text-xs"

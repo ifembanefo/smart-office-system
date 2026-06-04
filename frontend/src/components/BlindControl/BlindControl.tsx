@@ -48,7 +48,7 @@ export function BlindControl({ position, autoMode, onChange, onAutoToggle }: Pro
       <div>
         <div className="flex justify-between mb-2">
           <label className="text-sm font-medium text-gray-600">Angle</label>
-          <span className="text-sm font-bold text-primary">{position.angle.toFixed(0)} °</span>
+          <span className="text-sm font-bold text-primary">{position.angle.toFixed(0)} %</span>
         </div>
         <input
           type="range"
