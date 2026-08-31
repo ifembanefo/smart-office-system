@@ -225,3 +225,4 @@ class TestWOWAInvalidInput:
 
     def test_empty_values_returns_zero(self):
         assert wowa([], []) == 0.0
+

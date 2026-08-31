@@ -30,7 +30,7 @@ export function ConsentModal({ onConsent }: Props) {
           </p>
           <ul className="text-sm text-gray-700 space-y-2 list-disc list-inside leading-relaxed">
             <li>
-              Your environmental preferences (temperature, light intensity) will be collected for
+              Your environmental preferences (temperature, light intensity, blind height and blind angle) will be collected for
               the purpose of testing the aggregation functionality.
             </li>
             <li>

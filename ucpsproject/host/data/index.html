@@ -1,0 +1,250 @@
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jalousiensteuerung – UCPS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-50 min-h-screen p-4">
+
+<h1 class="text-3xl font-bold text-center mb-8 text-gray-800">
+    Jalousiesteuerung – UCPS
+</h1>
+
+<div class="max-w-3xl mx-auto space-y-6">
+
+    <!-- SENSOR STATUS -->
+    <div class="bg-white border rounded-lg p-6 shadow-sm">
+        <div class="grid grid-cols-2 gap-6">
+            <div class="flex justify-between items-center p-6 bg-gray-50 rounded w-full">
+                <svg class="w-16 h-16 text-gray-700" fill="currentColor" viewBox="0 0 24 24">
+                    <path
+                            d="M6.76 4.84l-1.8-1.79-1.41 1.41 1.79 1.79 1.42-1.41zM4 10.5H1v2h3v-2zm9-9.95h-2V3.5h2V.55zm7.45 3.91l-1.41-1.41-1.79 1.79 1.41 1.41 1.79-1.79zm-3.21 13.7l1.79 1.8 1.41-1.41-1.8-1.79-1.4 1.4zM20 10.5v2h3v-2h-3zm-8-5c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm-1 16.95h2V19.5h-2v2.95zm-7.45-3.91l1.41 1.41 1.79-1.8-1.41-1.41-1.79 1.8z" />
+                </svg>
+                <span class="text-lg text-gray-700 font-medium">Licht</span>
+            </div>
+            <div class="flex justify-center items-center p-6 bg-gray-50 rounded">
+                <progress id="light" value="60" max="6000"></progress>
+            </div>
+            <div class="flex justify-between items-center p-6 bg-gray-50 rounded w-full">
+                <svg class="w-16 h-16 text-gray-700" fill="currentColor" viewBox="0 0 24 24">
+                    <path
+                            d="M15 13V5c0-1.66-1.34-3-3-3S9 3.34 9 5v8c-1.21.91-2 2.37-2 4 0 2.76 2.24 5 5 5s5-2.24 5-5c0-1.63-.79-3.09-2-4zm-4-8c0-.55.45-1 1-1s1 .45 1 1h-1v1h1v2h-1v1h1v2h-2V5z" />
+                </svg>
+                <span class="text-lg text-gray-700 font-medium">Temperatur</span>
+            </div>
+            <div class="flex justify-center items-center p-6 bg-gray-50 rounded">
+                <h1 id="temp">7501452</h1>
+            </div>
+        </div>
+    </div>
+
+    <!-- STEUERUNG -->
+    <div class="bg-white border rounded-lg p-6 shadow-sm">
+        <h2 class="text-xl font-light mb-6 text-gray-800">Steuerung</h2>
+
+        <div class="space-y-6">
+
+            <!-- HÖHE -->
+            <div>
+                <label class="block text-sm text-gray-600 mb-1">
+                    Höhe <span id="heightPercent">0</span> %
+                </label>
+                <input id="heightSlider" type="range"
+                       min="0" max="100" value="0"
+                       class="w-full h-2 bg-gray-200 rounded-lg cursor-pointer">
+            </div>
+
+            <!-- WINKEL -->
+            <div>
+                <label class="block text-sm text-gray-600 mb-1">
+                    Neigungswinkel <span id="anglePercent">0</span> %
+                </label>
+                <input id="angleSlider" type="range"
+                       min="0" max="100" value="0"
+                       class="w-full h-2 bg-gray-200 rounded-lg cursor-pointer">
+            </div>
+
+        </div>
+    </div>
+
+    <!-- PRESETS -->
+    <div class="bg-white border border-gray-200 rounded-lg p-8 shadow-sm mb-6">
+        <h2 class="text-xl font-light mb-6 text-gray-800">Presets</h2>
+
+        <div class="grid grid-cols-3 gap-4 mb-8 pb-8 border-b border-gray-200">
+            <button id="blendungsModus"
+                    class="bg-yellow-100 hover:bg-yellow-200 border border-yellow-300 text-gray-800 py-4 rounded font-medium transition-colors">
+                Blendungs-Modus
+            </button>
+            <button id="sommerModus"
+                    class="bg-yellow-100 hover:bg-yellow-200 border border-yellow-300 text-gray-800 py-4 rounded font-medium transition-colors">
+                Sommer-Modus
+            </button>
+            <button id="winterModus"
+                    class="bg-yellow-100 hover:bg-yellow-200 border border-yellow-300 text-gray-800 py-4 rounded font-medium transition-colors">
+                Winter-Modus
+            </button>
+        </div>
+        <div class="grid grid-cols-3 gap-4 mb-8 pb-8 border-b border-gray-200">
+            <button id="offenButton"
+                    class="bg-yellow-100 hover:bg-yellow-200 border border-yellow-300 text-gray-800 py-4 rounded font-medium transition-colors">
+                Offen
+            </button>
+            <button id="geschlossenButton"
+                    class="bg-yellow-100 hover:bg-yellow-200 border border-yellow-300 text-gray-800 py-4 rounded font-medium transition-colors">
+                Geschlossen
+            </button>
+            <button
+                    class="bg-yellow-100 hover:bg-yellow-200 border border-yellow-300 text-gray-800 py-4 rounded font-medium transition-colors">
+                ...
+            </button>
+        </div>
+
+        <div class="grid grid-cols-3 gap-4">
+            <button id="profWeberButton"
+                    class="bg-blue-100 hover:bg-blue-200 border border-blue-300 text-gray-800 py-4 rounded font-medium transition-colors">
+                Prof. Weber
+            </button>
+            <button id="leonieBauerButton"
+                    class="bg-blue-100 hover:bg-blue-200 border border-blue-300 text-gray-800 py-4 rounded font-medium transition-colors">
+                Leonie Bauer
+            </button>
+            <button
+                    class="bg-blue-100 hover:bg-blue-200 border border-blue-300 text-gray-800 py-4 rounded font-medium transition-colors">
+                Neuer Benutzer
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- STYLES -->
+<style>
+    .preset {
+        background:#fef3c7;
+        border:1px solid #fde68a;
+        padding:1rem;
+        border-radius:.5rem;
+        font-weight:500;
+    }
+    .preset:hover {
+        background:#fde68a;
+    }
+</style>
+
+<!-- JAVASCRIPT -->
+<script>
+  let ws;
+  function connect() {
+    ws = new WebSocket('ws://' + location.hostname + ':81/');
+
+    ws.onopen = () => {
+        console.log("WebSocket connected");
+
+        // ⬅️ Hello/Handshake an den Host schicken
+        ws.send(JSON.stringify({
+            type: "hello",
+            id: "frontend1",    // beliebiger eindeutiger Name
+            role: "frontend"    // damit der Host weiß, dass es ein Frontend ist
+        }));
+    }
+
+    ws.onclose = () => setTimeout(connect, 2000);
+  }
+  connect();
+  const remotes = new Map();
+  const hSlider = document.getElementById('heightSlider');
+  const aSlider = document.getElementById('angleSlider');
+  const hPct = document.getElementById('heightPercent');
+  const aPct = document.getElementById('anglePercent');
+
+  function sendPosition() {
+    ws.send(JSON.stringify({
+      type: "position",
+      height: parseInt(hSlider.value),
+      angle: parseInt(aSlider.value)
+    }));
+  }
+
+  hSlider.addEventListener('input', () => {
+    hPct.textContent = hSlider.value;
+    sendPosition();
+  });
+
+  aSlider.addEventListener('input', () => {
+    aPct.textContent = aSlider.value;
+    sendPosition();
+  });
+
+  function setPreset(h, a) {
+    hSlider.value = h;
+    aSlider.value = a;
+    hPct.textContent = h;
+    aPct.textContent = a;
+    sendPosition();
+  }
+
+  // Sensordaten vom Host anzeigen
+  ws.onmessage = (event) => {
+    const msg = JSON.parse(event.data);
+    if (msg.type === "update") {
+      remotes.set(msg.remote, {"Remote" : msg.remote, "temp" : msg.temp, "licht" : msg.licht});
+      let maxTemp = 0;
+      let maxLight = 0;
+      remotes.forEach((remote) => {
+        maxTemp += remote.temp;
+        maxLight += remote.licht;
+      });
+      const avgTemp = maxTemp/remotes.size;
+      const avgLight = maxLight/remotes.size;
+      document.getElementById("temp").textContent =
+        Math.round(avgTemp) + " °C";
+      document.getElementById("light").value = avgLight;
+    } else if (msg.type === "position") {
+        console.log("Setzen der position von Controller");
+        setPreset(msg.height, msg.angle);
+    } else {
+      console.log("Der Type: " + msg.type);
+    }
+  };
+
+  // Blendungs-Modus Button
+  document.getElementById('blendungsModus').addEventListener('click', function () {
+    setPreset(55, 80);
+  });
+
+  // Sommer-Modus Button
+  document.getElementById('sommerModus').addEventListener('click', function () {
+    setPreset(75, 91);
+  });
+
+  // Winter-Modus Button
+  document.getElementById('winterModus').addEventListener('click', function () {
+    setPreset(55, 10);
+  });
+
+  // Offen Button
+  document.getElementById('offenButton').addEventListener('click', function () {
+    setPreset(0, 0);
+  });
+
+  // Geschlossen Button
+  document.getElementById('geschlossenButton').addEventListener('click', function () {
+    setPreset(100, 100);
+  });
+
+  // Prof. Weber Button
+  document.getElementById('profWeberButton').addEventListener('click', function () {
+    setPreset(60, 93);
+  });
+
+  // Leonie Bauer Button
+  document.getElementById('leonieBauerButton').addEventListener('click', function () {
+    setPreset(80, 85);
+  });
+
+</script>
+</body>
+</html>

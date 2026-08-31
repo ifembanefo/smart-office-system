@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Zwei Videos mit unabhängigen Slidern</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 900px;
+      margin: 40px auto;
+    }
+    .video-block {
+      margin-bottom: 40px;
+    }
+    video {
+      width: 100%;
+      background: #000;
+    }
+    input[type="range"] {
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Jalousie Steuerung</h2>
+
+  <!-- Video 1 -->
+  <div class="video-block">
+    <h3>Höhe</h3>
+    <video id="video1" muted preload="auto">
+
+    <source src="http://10.76.91.148:8000/videos/Video1.mp4" type="video/mp4">
+    </video>
+
+    <label>
+      Position: <span id="percent1">0</span> %
+    </label>
+
+    <input id="slider1" type="range" min="0" max="100" step="1" value="0" style="display: none;">
+  </div>
+
+  <!-- Video 2 -->
+  <div class="video-block">
+    <h3>Winkel</h3>
+    <video id="video2" muted preload="auto">
+      <source src="http://10.76.91.148:8000/videos/Video2.mp4" type="video/mp4">
+    </video>
+
+    <label>
+      Position: <span id="percent2">0</span> %
+    </label>
+
+    <input id="slider2" type="range" min="0" max="100" step="1" value="0" style="display: none;">
+  </div>
+
+  <script>
+    function updateBrightnessByVideo() {
+      const v1 = document.getElementById('video1');
+      const v2 = document.getElementById('video2');
+
+      if (!v1 || !v2 || !v1.duration || !v2.duration) return;
+
+      const progress1 = v1.currentTime / v1.duration; // Höhe
+      const progress2 = v2.currentTime / v2.duration; // Neigung
+      const effectiveDarkness = Math.max(progress1 * 0.7, progress2);
+      const lightness = 95 - (effectiveDarkness * 60);
+
+      document.body.style.backgroundColor = `hsl(0, 0%, ${lightness}%)`;
+    }
+
+    let videosReady = {
+      video1: false,
+      video2: false
+    };
+
+    let simulationBusy = false;
+
+    function setupVideoSlider(videoId, sliderId, percentId, delayMs = 2000) {
+      let initialized = false;
+
+      const video   = document.getElementById(videoId);
+      const slider  = document.getElementById(sliderId);
+      const percent = document.getElementById(percentId);
+
+      let pendingTimer = null;
+      let targetTime = 0;
+      let direction = "forward"; // "forward" | "backward"
+      let isProgrammaticPlay = false;
+
+      // Cancel-Token für Rückwärts-Loop
+      let rewindToken = 0;
+
+      // Feintuning rückwärts:
+      const REWIND_FPS = 60;   // "Soll"-Framerate der Rückwärtsbewegung
+      const REWIND_SPEED = 1;  // 1 = normal, 2 = doppelt so schnell rückwärts
+
+      function cancelPending() {
+        if (pendingTimer) {
+          clearTimeout(pendingTimer);
+          pendingTimer = null;
+        }
+      }
+
+      function stopAtTargetForward() {
+        const EPS = 0.04;
+        updateBrightnessByVideo();
+        if (video.currentTime + EPS >= targetTime) {
+          video.pause();
+          video.currentTime = targetTime;
+          isProgrammaticPlay = false;
+          stopForwardListener();
+        }
+        simulationBusy = false;
+      }
+
+      function stopForwardListener() {
+        video.removeEventListener('timeupdate', stopAtTargetForward);
+      }
+
+      function stopEverythingNow() {
+        cancelPending();
+        rewindToken++;           // bricht laufenden Rückwärts-Loop ab
+        stopForwardListener();
+        video.pause();
+        isProgrammaticPlay = false;
+      }
+
+      function waitForSeeked() {
+        return new Promise((resolve) => {
+          const onSeeked = () => {
+            video.removeEventListener('seeked', onSeeked);
+            resolve();
+          };
+          video.addEventListener('seeked', onSeeked, { once: true });
+        });
+      }
+
+      async function rewindSmoothToTarget(localToken) {
+        // Rückwärts "abspielen" durch kontrollierte, serielle Seeks
+        video.pause();
+
+        const step = (1 / REWIND_FPS) * REWIND_SPEED; // Sekunden pro Schritt
+        let lastTs = null;
+        let carry = 0;
+
+        const EPS = 0.002;
+
+        const tick = async (ts) => {
+          if (localToken !== rewindToken) return; // abgebrochen
+          if (video.currentTime <= targetTime + EPS) {
+            video.currentTime = targetTime;
+            return;
+          }
+
+          if (lastTs == null) lastTs = ts;
+          const dt = (ts - lastTs) / 1000;
+          lastTs = ts;
+
+          // akkumulieren der Zeit, um nicht auf jedem rAF seek-en zu müssen
+          carry += dt * REWIND_SPEED;
+
+          // Wenn genug Zeit "gesammelt" wurde einen Seek-Schritt
+          // Dadurch weniger Seek-Overhead -> weniger Ruckeln
+          if (carry >= (1 / REWIND_FPS)) {
+            // Wie viele Schritte sind fällig?
+            const stepsDue = Math.floor(carry / (1 / REWIND_FPS));
+            carry -= stepsDue * (1 / REWIND_FPS);
+
+            const next = Math.max(targetTime, video.currentTime - stepsDue * (1 / REWIND_FPS));
+            try {
+              // fastSeek
+              if (typeof video.fastSeek === "function") video.fastSeek(next);
+              else video.currentTime = next;
+
+              // Warten bis Seek fertig ist -> verhindert “stotterndes Stapeln”
+              await waitForSeeked();
+              updateBrightnessByVideo();
+            } catch (_) {
+              // Ignorieren, wenn Browser zickt
+            }
+          }
+
+          requestAnimationFrame(tick);
+        };
+
+        requestAnimationFrame(tick);
+      }
+
+      // Klick auf Video soll nichts starten
+      video.addEventListener('click', (e) => {
+        e.preventDefault();
+        video.pause();
+      });
+
+      // Sicherheitsnetz: falls play() “von außen” kommt
+      video.addEventListener('play', () => {
+        if (!isProgrammaticPlay) video.pause();
+      });
+
+      video.addEventListener('ended', () => {
+        video.pause();
+        video.currentTime = targetTime;
+        isProgrammaticPlay = false;
+      });
+
+
+      slider.addEventListener('input', (e) => {
+        const immediate = e.detail?.immediate === true;
+
+        stopEverythingNow();
+
+        percent.textContent = slider.value;
+        targetTime = (slider.value / 100) * video.duration;
+
+        const now = video.currentTime;
+        const EPS = 0.01;
+
+        if (targetTime > now + EPS) direction = "forward";
+        else if (targetTime < now - EPS) direction = "backward";
+        else {
+          video.currentTime = targetTime;
+          updateBrightnessByVideo();
+          return;
+        }
+
+        const startMovement = async () => {
+          isProgrammaticPlay = true;
+
+          if (direction === "forward") {
+            simulationBusy = true;
+            video.addEventListener('timeupdate', stopAtTargetForward);
+            await video.play();
+          } else {
+            simulationBusy = true;
+            const localToken = ++rewindToken;
+            await rewindSmoothToTarget(localToken);
+            simulationBusy = false;
+          }
+        };
+
+        if (immediate) {
+          startMovement();        // 🔥 sofort
+        } else {
+          pendingTimer = setTimeout(startMovement, delayMs);
+        }
+      });
+
+      video.addEventListener('loadedmetadata', () => {
+        if (initialized) return;
+        initialized = true;
+
+        stopEverythingNow();
+        video.currentTime = 0;
+        slider.value = 0;
+        percent.textContent = 0;
+
+        videosReady[videoId] = true;
+
+        simulationBusy = false;
+        console.log("loadedmetadata:", videoId);
+        console.log("videosReady:", videosReady);
+      });
+
+    }
+
+    setupVideoSlider('video1', 'slider1', 'percent1', 2000);
+    setupVideoSlider('video2', 'slider2', 'percent2', 2000);
+
+    function updateSimulation(height, angle) {
+      if (simulationBusy) return;
+      setVideoPosition('slider1', height);
+      setVideoPosition('slider2', angle);
+    }
+
+    function setVideoPosition(sliderId, value) {
+      const slider = document.getElementById(sliderId);
+
+      if (Number(slider.value) === Number(value)) return;
+
+      slider.value = value;
+
+      slider.dispatchEvent(new CustomEvent('input', {
+        detail: { immediate: true }
+      }));
+    }
+
+    async function pollState() {
+      if (!videosReady.video1 || !videosReady.video2) return;
+      console.log("polling busy");
+      console.log(simulationBusy);
+      if (simulationBusy) return;
+
+      try {
+        const r = await fetch('/state');
+        const s = await r.json();
+
+        updateSimulation(s.height, s.angle);
+      } catch (e) {
+        // optional: offline handling
+      }
+    }
+
+    setInterval(pollState, 5000);
+  </script>
+
+</body>
+</html>
